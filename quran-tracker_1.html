@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>متابعة مراجعة القرآن الكريم</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+      background: #EFE9DC;
+      min-height: 100vh;
+      color: #2C2C2C;
+      direction: rtl;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(160deg, #1B4D3E 0%, #163D30 100%);
+      padding: 28px 20px 36px;
+      position: relative;
+      overflow: hidden;
+    }
+    .deco-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(196,149,42,0.12);
+      pointer-events: none;
+    }
+    .hero-title { text-align: center; margin-bottom: 24px; }
+    .hero-h1     { font-size: 22px; font-weight: 800; color: #F5F0E8; margin-bottom: 4px; }
+    .hero-sub    { font-size: 12px; color: rgba(255,255,255,0.35); }
+
+    .hero-stats {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+    .ring-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ring-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .ring-pct  { font-size: 30px; font-weight: 800; color: #C4952A; line-height: 1; }
+    .ring-text { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+    .stat-col  { display: flex; flex-direction: column; gap: 14px; }
+    .stat-item { text-align: right; }
+    .stat-label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 3px;
+      letter-spacing: 0.5px;
+    }
+    .stat-value { font-size: 24px; font-weight: 800; color: #F5F0E8; line-height: 1.1; }
+    .stat-total { font-size: 12px; font-weight: 400; color: rgba(255,255,255,0.35); margin-right: 4px; }
+
+    /* ── Filters ── */
+    .filters {
+      padding: 14px 16px 10px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .filters::-webkit-scrollbar { display: none; }
+
+    .filter-btn {
+      background: white;
+      color: #7A7065;
+      border: 1.5px solid #DDD8CF;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+      font-weight: 400;
+    }
+    .filter-btn.active {
+      background: #1B4D3E;
+      color: white;
+      border-color: #1B4D3E;
+      font-weight: 600;
+    }
+    .filter-count {
+      background: #F0EBE3;
+      color: #A09080;
+      border-radius: 10px;
+      padding: 0 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .filter-btn.active .filter-count {
+      background: rgba(255,255,255,0.18);
+      color: white;
+    }
+
+    /* ── Grid ── */
+    .grid {
+      padding: 8px 14px 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 12px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 14px;
+      border: 1.5px solid #E6E0D6;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: box-shadow 0.3s;
+    }
+    .card.complete {
+      background: linear-gradient(140deg, #1B4D3E 0%, #163D30 100%);
+      border: none;
+      box-shadow: 0 6px 20px rgba(27,77,62,0.25);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+    .card-num  { font-size: 10px; color: #A09080; margin-bottom: 1px; }
+    .card-name { font-size: 17px; font-weight: 700; color: #1B4D3E; }
+    .card.complete .card-num  { color: rgba(168,196,184,0.7); }
+    .card.complete .card-name { color: #F5F0E8; }
+
+    .card-badge {
+      background: #F7F3ED;
+      color: #B0A898;
+      border: none;
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .card-badge.inprogress   { background: rgba(27,77,62,0.08); color: #1B4D3E; }
+    .card.complete .card-badge { background: rgba(196,149,42,0.2); color: #C4952A; }
+
+    /* Mini bar */
+    .mini-bar-bg {
+      height: 3px;
+      border-radius: 2px;
+      margin-bottom: 12px;
+      background: #F0EBE3;
+      overflow: hidden;
+    }
+    .card.complete .mini-bar-bg { background: rgba(255,255,255,0.12); }
+    .mini-bar {
+      height: 100%;
+      background: #2D7A5F;
+      border-radius: 2px;
+      transition: width 0.35s ease;
+    }
+    .card.complete .mini-bar { background: #C4952A; }
+
+    /* Ahzab */
+    .eighths {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .eighth-btn {
+      padding: 14px 8px;
+      border-radius: 12px;
+      border: 1.5px solid #E5DFD7;
+      background: #FAFAF7;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .eighth-btn.checked { border-color: #2D7A5F; background: #2D7A5F; }
+
+    .card.complete .eighth-btn {
+      border-color: rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+    }
+    .card.complete .eighth-btn.checked {
+      border-color: rgba(196,149,42,0.4);
+      background: rgba(196,149,42,0.18);
+    }
+
+    .eighth-lbl { font-size: 11px; color: #B0A090; }
+    .eighth-btn.checked .eighth-lbl { color: rgba(255,255,255,0.65); }
+    .card.complete .eighth-btn .eighth-lbl { color: rgba(255,255,255,0.25); }
+    .card.complete .eighth-btn.checked .eighth-lbl { color: rgba(196,149,42,0.8); }
+
+    .eighth-num { font-size: 22px; font-weight: 700; color: #1B4D3E; }
+    .eighth-btn.checked .eighth-num { color: #FFFFFF; }
+    .card.complete .eighth-btn .eighth-num { color: rgba(255,255,255,0.4); }
+    .card.complete .eighth-btn.checked .eighth-num { color: #C4952A; }
+
+    .complete-stamp {
+      margin-top: 12px;
+      text-align: center;
+      font-size: 11px;
+      color: #C4952A;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 16px 16px 32px;
+      border-top: 1px solid #DDD8CF;
+    }
+    .reset-btn {
+      background: transparent;
+      border: 1px solid #D0C9BF;
+      color: #A09080;
+      padding: 8px 22px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+      transition: background 0.2s;
+    }
+    .reset-btn:hover { background: #F0EBE3; }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+  const TOTAL_JUZ = 30;
+  const AHZAB     = 2;
+  const KEY       = 'quran-review-tracker-v2';
+  const AR        = ['١','٢'];
+  const NAMES     = [
+    'الأول','الثاني','الثالث','الرابع','الخامس',
+    'السادس','السابع','الثامن','التاسع','العاشر',
+    'الحادي عشر','الثاني عشر','الثالث عشر','الرابع عشر','الخامس عشر',
+    'السادس عشر','السابع عشر','الثامن عشر','التاسع عشر','العشرون',
+    'الحادي والعشرون','الثاني والعشرون','الثالث والعشرون','الرابع والعشرون','الخامس والعشرون',
+    'السادس والعشرون','السابع والعشرون','الثامن والعشرون','التاسع والعشرون','الثلاثون'
+  ];
+
+  let progress = [];
+  let activeFilter = 'all';
+
+  /* ── Storage ── */
+  function freshState() {
+    return Array.from({ length: TOTAL_JUZ }, () => Array(AHZAB).fill(false));
+  }
+  function load() {
+    try { const s = localStorage.getItem(KEY); if (s) return JSON.parse(s); } catch {}
+    return freshState();
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(progress)); } catch {}
+  }
+
+  /* ── Stats ── */
+  function stats() {
+    const doneTotal     = progress.flat().filter(Boolean).length;
+    const pct           = Math.round(doneTotal / (TOTAL_JUZ * AHZAB) * 100);
+    const doneJuz       = progress.filter(j => j.every(Boolean)).length;
+    const inProgressJuz = progress.filter(j => { const c = j.filter(Boolean).length; return c > 0 && c < AHZAB; }).length;
+    const notStartedJuz = progress.filter(j => j.every(v => !v)).length;
+    return { doneTotal, pct, doneJuz, inProgressJuz, notStartedJuz };
+  }
+
+  /* ── SVG Ring ── */
+  function ring(pct, size = 130, sw = 9) {
+    const r    = (size - sw * 2) / 2;
+    const circ = 2 * Math.PI * r;
+    const off  = circ - (pct / 100) * circ;
+    const c    = size / 2;
+    return `<svg width="${size}" height="${size}" style="display:block">
+      <circle cx="${c}" cy="${c}" r="${r}" fill="none"
+        stroke="rgba(255,255,255,0.08)" stroke-width="${sw}"/>
+      <circle cx="${c}" cy="${c}" r="${r}" fill="none"
+        stroke="#C4952A" stroke-width="${sw}"
+        stroke-dasharray="${circ.toFixed(2)}"
+        stroke-dashoffset="${off.toFixed(2)}"
+        stroke-linecap="round"
+        style="transform:rotate(-90deg);transform-origin:center;
+               transition:stroke-dashoffset 0.7s cubic-bezier(.4,0,.2,1)"/>
+    </svg>`;
+  }
+
+  /* ── Render ── */
+  function render() {
+    const { doneTotal, pct, doneJuz, inProgressJuz, notStartedJuz } = stats();
+
+    const filterDefs = [
+      { key: 'all',        label: 'الكل',      count: TOTAL_JUZ    },
+      { key: 'complete',   label: '✓ مكتمل',   count: doneJuz       },
+      { key: 'inprogress', label: '◑ جارٍ',    count: inProgressJuz },
+      { key: 'notstarted', label: '○ لم يبدأ', count: notStartedJuz },
+    ];
+
+    const visible = progress
+      .map((juz, i) => ({ juz, i }))
+      .filter(({ juz }) => {
+        const c = juz.filter(Boolean).length;
+        if (activeFilter === 'complete')   return c === AHZAB;
+        if (activeFilter === 'inprogress') return c > 0 && c < AHZAB;
+        if (activeFilter === 'notstarted') return c === 0;
+        return true;
+      });
+
+    const filtersHtml = filterDefs.map(f => `
+      <button class="filter-btn${activeFilter === f.key ? ' active' : ''}"
+        onclick="setFilter('${f.key}')">
+        ${f.label}
+        <span class="filter-count">${f.count}</span>
+      </button>`).join('');
+
+    const cardsHtml = visible.map(({ juz, i: ji }) => {
+      const done       = juz.filter(Boolean).length;
+      const isComplete = done === AHZAB;
+      const isEmpty    = done === 0;
+      const barW       = Math.round(done / AHZAB * 100);
+      const badgeCls   = isComplete ? '' : (isEmpty ? '' : ' inprogress');
+
+      const eighthsHtml = juz.map((checked, ei) => `
+        <button class="eighth-btn${checked ? ' checked' : ''}"
+          onclick="toggleEighth(${ji},${ei})"
+          title="الحزب ${AR[ei]}">
+          <span class="eighth-lbl">حزب</span>
+          <span class="eighth-num">${AR[ei]}</span>
+        </button>`).join('');
+
+      return `
+        <div class="card${isComplete ? ' complete' : ''}">
+          <div class="card-header">
+            <div>
+              <div class="card-num">الجزء ${ji + 1}</div>
+              <div class="card-name">${NAMES[ji]}</div>
+            </div>
+            <button class="card-badge${badgeCls}"
+              onclick="toggleJuz(${ji})"
+              title="${isComplete ? 'إلغاء إتمام الجزء' : 'إتمام كل الأحزاب'}">
+              ${done}/${AHZAB}
+            </button>
+          </div>
+          <div class="mini-bar-bg">
+            <div class="mini-bar" style="width:${barW}%"></div>
+          </div>
+          <div class="eighths">${eighthsHtml}</div>
+          ${isComplete ? '<div class="complete-stamp">✓ تمت المراجعة</div>' : ''}
+        </div>`;
+    }).join('');
+
+    document.getElementById('app').innerHTML = `
+      <div class="hero">
+        <div class="deco-ring" style="width:160px;height:160px;top:-50px;left:-50px"></div>
+        <div class="deco-ring" style="width:100px;height:100px;top:-25px;left:-25px"></div>
+        <div class="deco-ring" style="width:120px;height:120px;bottom:-40px;right:-20px"></div>
+        <div class="hero-title">
+          <h1 class="hero-h1">لوحة متابعة مراجعة القرآن</h1>
+          <p class="hero-sub">٣٠ جزءًا · كل جزء حزبان · المجموع ٦٠ حِزْبًا</p>
+        </div>
+        <div class="hero-stats">
+          <div class="ring-wrap">
+            ${ring(pct)}
+            <div class="ring-label">
+              <span class="ring-pct">${pct}%</span>
+              <span class="ring-text">مكتمل</span>
+            </div>
+          </div>
+          <div class="stat-col">
+            <div class="stat-item">
+              <div class="stat-label">الأحزاب المراجَعة</div>
+              <div class="stat-value">${doneTotal}<span class="stat-total">/ 60</span></div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">الأجزاء المكتملة</div>
+              <div class="stat-value">${doneJuz}<span class="stat-total">/ 30</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="filters">${filtersHtml}</div>
+
+      <div class="grid">${cardsHtml}</div>
+
+      <div class="footer">
+        <button class="reset-btn" onclick="resetAll()">↺ إعادة تعيين كل التقدم</button>
+      </div>`;
+  }
+
+  /* ── Actions ── */
+  function toggleEighth(ji, ei) {
+    progress[ji][ei] = !progress[ji][ei];
+    save(); render();
+  }
+  function toggleJuz(ji) {
+    const allDone = progress[ji].every(Boolean);
+    progress[ji] = progress[ji].map(() => !allDone);
+    save(); render();
+  }
+  function setFilter(f) {
+    activeFilter = f;
+    render();
+  }
+  function resetAll() {
+    if (!confirm('هل تريد مسح كل التقدم والبدء من جديد؟')) return;
+    progress = freshState();
+    save(); render();
+  }
+
+  /* ── Init ── */
+  progress = load();
+  render();
+</script>
+</body>
+</html>
